@@ -24,3 +24,12 @@ typedef struct {
 } Finding;
 
 #endif // CSV_PARSER_H
+
+// Function prototype for encoding severity strings to integer codes
+int encode_severity(const char *sev);
+
+// Function prototype for decoding severity codes back to strings
+const char *decode_severity(int code);
+
+// Function prototype for the CSV parsing function
+int parse_csv(const char *filename, Finding *findings, int max_findings);
