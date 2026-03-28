@@ -9,6 +9,10 @@ int main() {
     if (rows > 0) {
         printf("Row 1 Name: %s\n", my_data[0].finding_name);
         printf("Row 1 CVSS: %f\n", my_data[0].cvss);
+        printf("Row 1 Port: %d\n", my_data[0].port);
+        printf("Row 1 Severity: %s\n", my_data[0].severity);
+        printf("Row 1 Evidence: %s\n", my_data[0].evidence);
+        printf("Row 1 Label: %d\n", my_data[0].label);
     }
     return 0;
 }
