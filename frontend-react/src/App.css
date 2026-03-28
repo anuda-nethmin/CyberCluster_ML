@@ -1,0 +1,851 @@
+/* ===================================================================
+   CyberCluster — React Frontend Stylesheet
+   Color Palette: Black (#1a1a1a), White (#fff), Red (#C41E3A)
+   Font: Inter (Google Fonts) — clean, modern sans-serif
+   =================================================================== */
+
+/* Import the Inter font family with multiple weights (300–900) */
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap");
+
+/* ===== RESET & GLOBALS =====
+   Remove default browser margins/padding; border-box means
+   padding doesn't increase element size. */
+*,
+*::before,
+*::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  font-family: "Inter", sans-serif;
+  color: #1a1a1a;
+  /* Dark text for readability */
+  background: #f5f5f5;
+  /* Subtle off-white page background */
+  min-height: 100vh;
+}
+
+/* ===== LAYOUT =====
+   Flexbox row: sidebar (left) + main content (right). */
+.app-container {
+  display: flex;
+  min-height: 100vh;
+}
+
+/* ===== SIDEBAR =====
+   300px fixed-width left panel. Flex column so items stack vertically.
+   overflow-y: auto allows scrolling when content exceeds viewport. */
+.sidebar {
+  width: 300px;
+  min-width: 300px;
+  background: #ffffff;
+  border-right: 1px solid #f0f0f0;
+  box-shadow: 2px 0 20px rgba(0, 0, 0, 0.04);
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  overflow-y: auto;
+  transition: transform 0.3s ease;
+  /* Slide animation for mobile */
+  z-index: 100;
+}
+
+/* Logo + brand name row */
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  margin-bottom: 0.5rem;
+}
+
+.sidebar-logo {
+  font-size: 1.5rem;
+}
+
+/* Brand name in maroon */
+.sidebar-title {
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: #c41e3a;
+  letter-spacing: -0.3px;
+}
+
+/* Gradient horizontal line that fades at both ends */
+.sidebar-divider {
+  height: 1px;
+  background: linear-gradient(to right, transparent, #e8e8e8, transparent);
+  margin: 1rem 0;
+}
+
+.sidebar-section {
+  margin-bottom: 0.3rem;
+}
+
+/* Uppercase section headings (e.g. "Training Data") */
+.sidebar-section-title {
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #1a1a1a;
+  margin-bottom: 0.8rem;
+}
+
+/* ===== FILE UPLOAD =====
+   Hidden native input overlays a styled label so the entire
+   dashed zone is clickable + supports drag-and-drop. */
+.file-drop-zone {
+  position: relative;
+}
+
+.file-input {
+  position: absolute;
+  opacity: 0;
+  /* Invisible but clickable */
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+  z-index: 2;
+}
+
+/* Dashed border drop-zone */
+.file-label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 1.2rem 1rem;
+  border: 2px dashed #ddd;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  text-align: center;
+  background: #fafafa;
+}
+
+/* Hover: highlight in brand colour */
+.file-label:hover {
+  border-color: #c41e3a;
+  background: #fff5f5;
+}
+
+.file-icon {
+  font-size: 1.5rem;
+}
+
+.file-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #1a1a1a;
+  word-break: break-all;
+}
+
+.file-hint {
+  font-size: 0.75rem;
+  color: #999;
+}
+
+/* ===== SELECT DROPDOWN =====
+   Custom <select> — native arrow hidden via appearance:none;
+   custom SVG arrow via background-image. */
+.select-input {
+  width: 100%;
+  padding: 0.6rem 0.8rem;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-family: "Inter", sans-serif;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #1a1a1a;
+  background: #fff;
+  cursor: pointer;
+  transition: border-color 0.2s ease;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M6 8L1 3h10z' fill='%23888'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.8rem center;
+}
+
+/* Focus ring for accessibility */
+.select-input:focus {
+  outline: none;
+  border-color: #c41e3a;
+  box-shadow: 0 0 0 3px rgba(196, 30, 58, 0.1);
+}
+
+/* ===== SLIDERS =====
+   Range inputs for Learning Rate & Epochs.
+   Track: thin grey bar.  Thumb: maroon circle with shadow. */
+.param-group {
+  margin-bottom: 1rem;
+}
+
+.param-label {
+  display: block;
+  font-size: 0.82rem;
+  color: #555;
+  margin-bottom: 0.4rem;
+}
+
+/* Current value shown in bold brand colour */
+.param-label strong {
+  color: #c41e3a;
+  font-weight: 700;
+}
+
+.slider-input {
+  width: 100%;
+  -webkit-appearance: none;
+  appearance: none;
+  height: 6px;
+  border-radius: 3px;
+  background: #e0e0e0;
+  outline: none;
+  cursor: pointer;
+}
+
+/* WebKit slider thumb */
+.slider-input::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #c41e3a;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(196, 30, 58, 0.3);
+  transition: transform 0.15s ease;
+}
+
+/* Scale up on hover for micro-interaction */
+.slider-input::-webkit-slider-thumb:hover {
+  transform: scale(1.15);
+}
+
+/* Firefox slider thumb */
+.slider-input::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #c41e3a;
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 2px 6px rgba(196, 30, 58, 0.3);
+}
+
+/* ===== RUN BUTTON =====
+   Primary CTA — margin-top:auto pushes it to sidebar bottom. */
+.run-button {
+  width: 100%;
+  padding: 0.75rem 1.5rem;
+  background: #c41e3a;
+  color: #ffffff;
+  border: none;
+  border-radius: 10px;
+  font-family: "Inter", sans-serif;
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 14px rgba(196, 30, 58, 0.25);
+  margin-top: auto;
+}
+
+.run-button:hover:not(:disabled) {
+  background: #9a1830;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(196, 30, 58, 0.35);
+}
+
+.run-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ===== SIDEBAR TOGGLE (mobile ≤768px) ===== */
+.sidebar-toggle {
+  display: none;
+  position: fixed;
+  top: 1rem;
+  left: 1rem;
+  z-index: 200;
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  border: none;
+  background: #c41e3a;
+  color: #fff;
+  font-size: 1.2rem;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* ===== MAIN CONTENT =====
+   Right-hand area; flex:1 fills remaining space. */
+.main-content {
+  flex: 1;
+  padding: 2rem;
+  overflow-y: auto;
+}
+
+/* ===== HEADER BANNER =====
+   Maroon banner with title + DMU logo.
+   Radial-gradient glows add visual depth. */
+.header-banner {
+  background: #c41e3a;
+  padding: 2rem 2.5rem;
+  border-radius: 20px;
+  margin-bottom: 2rem;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(196, 30, 58, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* DMU logo — CSS filter inverts it to white */
+.dmu-logo {
+  height: 60px;
+  position: relative;
+  z-index: 1;
+  filter: brightness(0) invert(1);
+  opacity: 0.9;
+}
+
+/* Top-right radial glow */
+.header-glow {
+  position: absolute;
+  top: -50%;
+  right: -20%;
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.08) 0%, transparent 70%);
+  border-radius: 50%;
+}
+
+/* Bottom-left radial glow (pseudo-element) */
+.header-banner::after {
+  content: "";
+  position: absolute;
+  bottom: -30%;
+  left: 10%;
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.05) 0%, transparent 70%);
+  border-radius: 50%;
+}
+
+.header-text {
+  position: relative;
+  z-index: 1;
+}
+
+.header-text h1 {
+  color: #ffffff;
+  font-size: 2.2rem;
+  font-weight: 900;
+  letter-spacing: -0.5px;
+}
+
+.header-text p {
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 1rem;
+  margin-top: 0.3rem;
+  font-weight: 400;
+  letter-spacing: 0.5px;
+}
+
+/* ===== ERROR MESSAGE ===== */
+.error-message {
+  background: #fff5f5;
+  border: 1px solid #fecaca;
+  color: #c41e3a;
+  padding: 0.8rem 1.2rem;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  margin-bottom: 1.5rem;
+}
+
+/* ===== LOADING SPINNER =====
+   CSS-only spinning circle — maroon segment rotates. */
+.loading-container {
+  text-align: center;
+  padding: 4rem 2rem;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #f0f0f0;
+  border-top-color: #c41e3a;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin: 0 auto 1rem auto;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.loading-container p {
+  color: #888;
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+/* ===== SECTION HEADERS ===== */
+.section-divider {
+  height: 1px;
+  background: linear-gradient(to right, transparent, #e0e0e0, transparent);
+  margin: 2rem 0;
+}
+
+.section-header {
+  margin-bottom: 1.5rem;
+}
+
+/* Title with thick brand-colour underline */
+.section-title {
+  color: #c41e3a;
+  font-size: 1.4rem;
+  font-weight: 800;
+  padding-bottom: 0.5rem;
+  border-bottom: 3px solid #c41e3a;
+  display: inline-block;
+  letter-spacing: -0.3px;
+}
+
+.section-subtitle {
+  color: #888;
+  font-size: 0.85rem;
+  margin-top: 0.3rem;
+  letter-spacing: 0.2px;
+}
+
+/* ===== METRIC CARDS =====
+   4-column grid.  Each card has a maroon top-bar via ::before. */
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.metric-card {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 1.5rem 1.2rem;
+  text-align: center;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 4px 12px rgba(0, 0, 0, 0.04);
+  border: 1px solid #f0f0f0;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Thin maroon bar at top of card */
+.metric-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: #c41e3a;
+}
+
+/* Lift on hover */
+.metric-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08), 0 8px 24px rgba(196, 30, 58, 0.1);
+}
+
+.metric-value {
+  font-size: 2.2rem;
+  font-weight: 900;
+  color: #c41e3a;
+  line-height: 1;
+  margin-top: 0.3rem;
+}
+
+.metric-label {
+  font-size: 0.7rem;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  margin-top: 0.6rem;
+  font-weight: 600;
+}
+
+/* ===== CHARTS ===== */
+.charts-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.chart-card {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 4px 12px rgba(0, 0, 0, 0.04);
+  border: 1px solid #f0f0f0;
+}
+
+.chart-card h4 {
+  color: #1a1a1a;
+  font-weight: 700;
+  font-size: 1rem;
+  margin-bottom: 1rem;
+  letter-spacing: -0.2px;
+}
+
+/* ===== CLUSTER CARDS (Prediction Results) =====
+   White card with thick maroon left border. */
+.cluster-card {
+  background: #ffffff;
+  border: 1px solid #f0f0f0;
+  border-left: 5px solid #c41e3a;
+  border-radius: 12px;
+  margin-bottom: 0.8rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  transition: all 0.25s ease;
+  overflow: hidden;
+}
+
+.cluster-card:hover {
+  transform: translateX(4px);
+  box-shadow: 0 4px 16px rgba(196, 30, 58, 0.1);
+  border-left-color: #9a1830;
+}
+
+.cluster-header {
+  padding: 1.3rem 1.5rem;
+  cursor: pointer;
+  user-select: none;
+}
+
+.cluster-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.cluster-title-row h3 {
+  color: #c41e3a;
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: -0.2px;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.expand-icon {
+  font-size: 0.75rem;
+  color: #999;
+}
+
+.cluster-meta {
+  color: #555;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  flex-wrap: wrap;
+  margin-top: 0.5rem;
+}
+
+.cluster-meta .sep {
+  color: #ddd;
+}
+
+.cluster-meta strong {
+  color: #c41e3a;
+}
+
+.noise-tag {
+  background: #fff5f5;
+  border: 1px solid #c41e3a;
+  color: #c41e3a;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+/* ===== SEVERITY BADGES =====
+   Coloured pills for Critical → Info threat levels. */
+.badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 6px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.badge-critical {
+  background: #c41e3a;
+  color: #fff;
+}
+
+.badge-high {
+  background: #e74c3c;
+  color: #fff;
+}
+
+.badge-medium {
+  background: #e67e22;
+  color: #fff;
+}
+
+.badge-low {
+  background: #888;
+  color: #fff;
+}
+
+.badge-info {
+  background: #bdc3c7;
+  color: #333;
+}
+
+/* ===== FINDINGS TABLE =====
+   Data table for prediction results; scrolls horizontally on mobile. */
+.findings-table-container {
+  padding: 0 1.5rem 1.3rem 1.5rem;
+  overflow-x: auto;
+}
+
+.findings-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.findings-table thead th {
+  background: #fafafa;
+  padding: 0.6rem 0.8rem;
+  text-align: left;
+  font-weight: 600;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #666;
+  border-bottom: 2px solid #f0f0f0;
+}
+
+.findings-table tbody td {
+  padding: 0.6rem 0.8rem;
+  border-bottom: 1px solid #f5f5f5;
+  vertical-align: top;
+}
+
+.findings-table tbody tr:hover {
+  background: #fafafa;
+}
+
+.finding-name {
+  font-weight: 500;
+  color: #1a1a1a;
+  max-width: 250px;
+}
+
+.cvss-value {
+  font-weight: 700;
+  color: #c41e3a;
+}
+
+.evidence-cell {
+  color: #666;
+  font-size: 0.8rem;
+  max-width: 200px;
+  word-break: break-word;
+}
+
+/* ===== EMPTY STATE =====
+   Welcome screen shown when no data has been processed. */
+.empty-state {
+  text-align: center;
+  padding: 5rem 2rem;
+}
+
+.icon-circle {
+  width: 80px;
+  height: 80px;
+  background: #c41e3a;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 8px 24px rgba(196, 30, 58, 0.2);
+}
+
+.empty-state h2 {
+  color: #1a1a1a;
+  font-weight: 800;
+  font-size: 1.8rem;
+  margin-bottom: 0.5rem;
+  letter-spacing: -0.3px;
+}
+
+.accent {
+  color: #c41e3a;
+}
+
+.empty-state p {
+  color: #777;
+  font-size: 1rem;
+  max-width: 500px;
+  margin: 0 auto;
+  line-height: 1.7;
+}
+
+/* Step cards (available for future onboarding flow) */
+.steps {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  margin-top: 2.5rem;
+  flex-wrap: wrap;
+}
+
+.step-card {
+  background: #ffffff;
+  border: 1px solid #f0f0f0;
+  border-radius: 14px;
+  padding: 1.5rem 1.2rem;
+  width: 160px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  transition: all 0.2s ease;
+}
+
+.step-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 16px rgba(196, 30, 58, 0.1);
+}
+
+.step-num {
+  background: #c41e3a;
+  color: #fff;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  font-weight: 700;
+  margin-bottom: 0.8rem;
+}
+
+.step-text {
+  color: #333;
+  font-size: 0.85rem;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+/* ===== RESPONSIVE BREAKPOINTS ===== */
+
+/* Tablet (≤1024px) */
+@media (max-width: 1024px) {
+  .metrics-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .charts-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Phone (≤768px): sidebar becomes fixed overlay */
+@media (max-width: 768px) {
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    transform: translateX(-100%);
+  }
+
+  .sidebar.open {
+    transform: translateX(0);
+  }
+
+  .sidebar-toggle {
+    display: block;
+  }
+
+  .main-content {
+    padding: 1rem;
+    padding-top: 4rem;
+  }
+
+  .header-text h1 {
+    font-size: 1.6rem;
+  }
+
+  .metrics-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* Small phone (≤480px) */
+@media (max-width: 480px) {
+  .metrics-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .steps {
+    flex-direction: column;
+    align-items: center;
+  }
+}
+
+/* ===== SIDEBAR TABS (Train / Predict toggle) ===== */
+.sidebar-tabs {
+  display: flex;
+  margin-bottom: 1rem;
+  background: #f0f0f0;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.tab-btn {
+  flex: 1;
+  padding: 0.75rem 0;
+  border: none;
+  background: transparent;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #888;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.tab-btn:hover {
+  background: #e0e0e0;
+}
+
+/* Active tab: white bg, brand colour text */
+.tab-btn.active {
+  background: white;
+  color: #C41E3A;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}

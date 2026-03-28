@@ -1,0 +1,13 @@
+/*
+ * index.css — Global Base Stylesheet
+ *
+ * This file is imported by main.jsx and is loaded before any component
+ * styles.  It's intentionally kept empty because the full CSS reset and
+ * all visual styling is handled in App.css (imported by App.jsx).
+ *
+ * You could add truly global, non-component-specific styles here if
+ * needed (e.g. CSS custom properties / variables shared across future
+ * components).
+ */
+
+/* Reset handled in App.css */
