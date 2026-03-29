@@ -9,7 +9,7 @@ And extracting mathematical vectors to be used for training or inference.
 #include <stdio.h>
 
 /*
-Encode serverity
+1. Function for encoding severity
 * Maps human readable severity levels to numerical weight.
 * This ensures that gradient descent can effectively learn from the severity of findings.
 */
@@ -31,7 +31,7 @@ int encode_severity(const char *severity) {
 }
 
 /*
-Decode severity
+2. Function for decoding severity
 * Converts numerical weight back to human readable severity levels.
 */
 const char* decode_severity(int weight) {
@@ -46,7 +46,7 @@ const char* decode_severity(int weight) {
 }
 
 /*
-Copy Token
+3. Function for copying tokens
 * Utility function to copy a token from the CSV line and store it in a structured array.
 * Forces a null terminator to prevent buffer overflow vulnerabilities.
 */
@@ -57,7 +57,7 @@ static void copy_token(char *dest, const char *src, size_t max_len) {
 }
 
 /*
-Parse CSV
+4. Function for parsing CSV
 * Reads the csv file line by line, extracts the relevant fields, and store them in a structured array (Finding).
 */
 int parse_csv(const char *filename, Finding *findings, int max_findings) {
@@ -123,3 +123,8 @@ int parse_csv(const char *filename, Finding *findings, int max_findings) {
   return count; // Return total parsed rowsffdsf
   
 }
+
+/*
+5. Function for extracting mathematical vectors from the structured array of findings,
+*to be used for training or inference.
+*/

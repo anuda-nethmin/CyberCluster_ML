@@ -1,18 +1,30 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include "csv_parser.h"
-int main() {
-    Finding my_data[10]; // Make a small array of 10 toolboxes
-    // Try to run just the parser on the test.csv file
-    int rows = parse_csv("test.csv", my_data, 10);
-    // Print the results to see if the parser successfully filled the boxes!
-    printf("Successfully parsed %d rows!\n", rows);
-    if (rows > 0) {
-        printf("Row 1 Name: %s\n", my_data[0].finding_name);
-        printf("Row 1 CVSS: %f\n", my_data[0].cvss);
-        printf("Row 1 Port: %d\n", my_data[0].port);
-        printf("Row 1 Severity: %s\n", my_data[0].severity);
-        printf("Row 1 Evidence: %s\n", my_data[0].evidence);
-        printf("Row 1 Label: %d\n", my_data[0].label);
+int main(int argc, char *argv[]) {
+    const char *filename = (argc > 1) ? argv[1] : "synthetic_10k_dataset.csv";
+    const int max_rows = 4;
+    Finding *my_data = malloc(max_rows * sizeof(*my_data));
+    if (!my_data) {
+        fprintf(stderr, "Failed to allocate memory for %d rows\n", max_rows);
+        return 1;
     }
+    // Try to run the parser on the requested CSV file
+    int rows = parse_csv(filename, my_data, max_rows);
+    if (rows < 0) {
+        printf("Failed to parse %s\n", filename);
+        free(my_data);
+        return 1;
+    }
+    printf("Successfully parsed %d rows from %s!\n", rows, filename);
+    for (int i = 0; i < rows; ++i) {
+        printf("Row %d Name: %s\n", i + 1, my_data[i].finding_name);
+        printf("Row %d CVSS: %f\n", i + 1, my_data[i].cvss);
+        printf("Row %d Port: %d\n", i + 1, my_data[i].port);
+        printf("Row %d Severity: %s\n", i + 1, my_data[i].severity);
+        printf("Row %d Evidence: %s\n", i + 1, my_data[i].evidence);
+        printf("Row %d Label: %d\n\n", i + 1, my_data[i].label);
+    }
+    free(my_data);
     return 0;
 }
