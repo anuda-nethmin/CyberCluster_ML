@@ -16,6 +16,11 @@ int main(int argc, char *argv[]) {
         free(my_data);
         return 1;
     }
+
+    double *features = NULL;
+    double *targets = NULL;
+    int dim = 0;
+
     printf("Successfully parsed %d rows from %s!\n", rows, filename);
     for (int i = 0; i < rows; ++i) {
         printf("Row %d Name: %s\n", i + 1, my_data[i].finding_name);
@@ -24,6 +29,21 @@ int main(int argc, char *argv[]) {
         printf("Row %d Severity: %s\n", i + 1, my_data[i].severity);
         printf("Row %d Evidence: %s\n", i + 1, my_data[i].evidence);
         printf("Row %d Label: %d\n\n", i + 1, my_data[i].label);
+    }
+    int err = extract_data(my_data, rows, "cvss", &features, &targets, &dim);
+    if (err != 0) {
+        fprintf(stderr, "extract_data failed\n");
+    } else {
+        printf("dim = %d\n", dim);
+        for (int i = 0; i < rows; ++i) {
+            printf("row %d: ", i + 1);
+            for (int j = 0; j < dim; ++j) {
+                printf("%f ", features[i * dim + j]);
+            }
+            printf(" -> target %f\n", targets[i]);
+        }
+        free(features);
+        free(targets);
     }
     free(my_data);
     return 0;

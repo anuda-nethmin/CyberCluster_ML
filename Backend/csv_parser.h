@@ -33,3 +33,7 @@ const char *decode_severity(int code);
 
 // Function prototype for the CSV parsing function
 int parse_csv(const char *filename, Finding *findings, int max_findings);
+
+// Function prototype for the feature/target extraction function
+int extract_data(const Finding *findings, int n, const char *target_col, 
+  double **features_out, double **targets_out, int *dim_out);

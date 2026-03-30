@@ -128,3 +128,50 @@ int parse_csv(const char *filename, Finding *findings, int max_findings) {
 5. Function for extracting mathematical vectors from the structured array of findings,
 *to be used for training or inference.
 */
+int extract_data(const Finding *findings, int n, const char *target_col,
+                 double **features_out, double **targets_out, int *dim_out) {
+  int dim = 0;
+  
+  /*
+  Decide how many input parameters (dimensions) exist based on what we're predicting
+  */ 
+
+  if (strcmp(target_col, "cvss") == 0) {
+    dim = 3; // Predicting CVSS relies on: Port, Severity Encoding, Evidence Length
+  } else if (strcmp(target_col, "label") == 0) {
+    dim = 4; // Predicting binary Label relies on: CVSS, Port, Severity Encoding, Evidence Length
+  } else {
+    return -1; // Unknown configuration 
+  }
+
+  *dim_out = dim;
+
+ // Allocate exact memory layout arrays for features [n x dim] and targets [n x 1]
+  double *feat = (double *)malloc(n * dim * sizeof(double));
+  double *targ = (double *)malloc(n * sizeof(double));
+  if (!feat || !targ) {
+    if (feat) free(feat);
+    if (targ) free(targ);
+    return -1;
+  }
+  
+  // Serialize the struct elements dynamically into the arrays
+  for (int i = 0; i < n; i++) {
+    int base = i * dim;
+    if (strcmp(target_col, "cvss") == 0) {
+      feat[base + 0] = (double)findings[i].port;
+      feat[base + 1] = (double)encode_severity(findings[i].severity);
+      feat[base + 2] = (double)strlen(findings[i].evidence);
+      targ[i] = (double)findings[i].cvss;
+    } else {
+      feat[base + 0] = (double)findings[i].cvss;
+      feat[base + 1] = (double)findings[i].port;
+      feat[base + 2] = (double)encode_severity(findings[i].severity);
+      feat[base + 3] = (double)strlen(findings[i].evidence);
+      targ[i] = (double)findings[i].label;
+    }
+  }
+  features_out[0] = feat;
+  targets_out[0] = targ;
+  return 0;
+}
