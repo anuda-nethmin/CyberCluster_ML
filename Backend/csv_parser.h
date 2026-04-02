@@ -37,3 +37,8 @@ int parse_csv(const char *filename, Finding *findings, int max_findings);
 // Function prototype for the feature/target extraction function
 int extract_data(const Finding *findings, int n, const char *target_col, 
   double **features_out, double **targets_out, int *dim_out);
+
+// Function prototype for normalizing features using Min-Max scaling
+void min_max_normalize_features(double *features, int n, int dim);
+
+#endif

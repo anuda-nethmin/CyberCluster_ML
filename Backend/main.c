@@ -42,6 +42,37 @@ int main(int argc, char *argv[]) {
             }
             printf(" -> target %f\n", targets[i]);
         }
+
+        printf("\n=== Raw Features (before normalization) ===\n");
+        for (int i = 0; i < rows; ++i) {
+            printf("row %d: ", i + 1);
+            for (int j = 0; j < dim; ++j) {
+                printf("%f ", features[i * dim + j]);
+            }
+            printf(" -> target %f\n", targets[i]);
+        }
+        printf("\n=== Flat Feature Array (before) ===\n");
+        for (int i = 0; i < rows * dim; ++i) {
+        printf("[%d] %f\n", i, features[i]);
+        }
+
+         // --- Normalize and print ---
+        min_max_normalize_features(features, rows, dim);
+        printf("\n=== Normalized Features (after normalization) ===\n");
+        for (int i = 0; i < rows; ++i) {
+            printf("row %d: ", i + 1);
+            for (int j = 0; j < dim; ++j) {
+                printf("%f ", features[i * dim + j]);
+            }
+            printf(" -> target %f\n", targets[i]);
+        }
+
+        // --- Print flat array after normalization ---
+printf("\n=== Flat Feature Array (after) ===\n");
+for (int i = 0; i < rows * dim; ++i) {
+    printf("[%d] %f\n", i, features[i]);
+}
+
         free(features);
         free(targets);
     }

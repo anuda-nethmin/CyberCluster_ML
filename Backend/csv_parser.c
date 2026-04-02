@@ -178,7 +178,8 @@ int extract_data(const Finding *findings, int n, const char *target_col,
 
 /*
 6. Function for normalizing features using Min-Max scaling
-A nessary step to ensure that all features contribute equally to the learning process and to improve convergence during training.
+A nessary step to ensure that all features contribute equally to the models learning process.
+prevents gradient explosion during training loop.
 */
 void min_max_normalize_features(double *features, int n, int dim) {
   //loop column by column (feature by feature) to find min and max,
