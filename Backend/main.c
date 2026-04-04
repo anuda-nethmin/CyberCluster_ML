@@ -72,10 +72,39 @@ printf("\n=== Flat Feature Array (after) ===\n");
 for (int i = 0; i < rows * dim; ++i) {
     printf("[%d] %f\n", i, features[i]);
 }
+// ---- Train on normalized CSV data ----
+        printf("\n=== Training Linear Regression on CSV Data ===\n");
+        int loss_epochs = 1000;
+        double *loss_history = malloc(loss_epochs * sizeof(double));
+        if (!loss_history) {
+            fprintf(stderr, "Failed to allocate loss history\n");
+            free(features); free(targets); free(my_data);
+            return 1;
+        }
 
+        int train_err = train_linear_regression(
+            features, targets,
+            rows, dim,
+            0.01,
+            loss_epochs,
+            "csv_weights.bin",
+            loss_history
+        );
+
+        if (train_err != 0) {
+            fprintf(stderr, "Training failed\n");
+        } else {
+            printf("Training complete.\n");
+            printf("Loss at epoch 0:    %f\n", loss_history[0]);
+            printf("Loss at epoch 500:  %f\n", loss_history[499]);
+            printf("Loss at epoch 999:  %f\n", loss_history[999]);
+        }
+
+        free(loss_history);
         free(features);
         free(targets);
     }
+
     free(my_data);
     return 0;
 }

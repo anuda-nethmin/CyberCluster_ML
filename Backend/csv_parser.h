@@ -23,8 +23,6 @@ typedef struct {
   int label;               // Binary target 2 (1 = exploit, 0 = false positive)
 } Finding;
 
-#endif // CSV_PARSER_H
-
 // Function prototype for encoding severity strings to integer codes
 int encode_severity(const char *sev);
 
@@ -41,4 +39,4 @@ int extract_data(const Finding *findings, int n, const char *target_col,
 // Function prototype for normalizing features using Min-Max scaling
 void min_max_normalize_features(double *features, int n, int dim);
 
-#endif
+#endif // CSV_PARSER_H
