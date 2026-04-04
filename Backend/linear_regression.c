@@ -9,7 +9,7 @@ Used for predicting continuous values like CVSS scores (7.5,3.1,9) based on nume
 #include <stdlib.h>
 
 /*
-Train linear regression model function
+ Function to train linear regression model using gradient descent optimization.
 calculate optimal weights to minimize the difference (MSE) between predicted and actual target values.
 
 
@@ -89,4 +89,48 @@ int train_linear_regression(double *features, double *targets, int n, int dim,
     free(weights);
     return 0;
 
+}
+
+/*
+Function to predict target values using the learned weights from the linear regression model.
+
+*/
+
+int predict_linear_regression(double *features, int n, int dim, const char *weight_file, double *predictions)
+{
+    // Load weights from the file
+    FILE *fp = fopen(weight_file, "rb");
+    if (!fp) return -1;
+
+    int saved_dim;
+    if (fread(&saved_dim, sizeof(int), 1, fp) != 1 || saved_dim != dim) {
+        fclose(fp);
+        return -1; // Dimension mismatch or read error
+    }
+
+    // Allocate exact memory for weights based on the dimension read from the file
+    double *weights = (double *)malloc((dim + 1) * sizeof(double));
+    if (!weights) {
+        fclose(fp);
+        return -1;
+    }
+
+    // Read the weights from the file
+    if (fread(weights, sizeof(double), dim + 1, fp) != (size_t)(dim + 1)) {
+        free(weights);
+        fclose(fp);
+        return -1; // Read error
+    }
+
+    // Make predictions using the loaded weights
+    for (int i = 0; i < n; i++) {
+        double y_pred = weights[0]; // Start with bias
+        for (int j = 0; j < dim; j++) {
+            y_pred += weights[j + 1] * features[i * dim + j];
+        }
+        predictions[i] = y_pred;
+    }
+
+    free(weights);
+    return 0; // Success
 }

@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "csv_parser.h"
+#include "linear_regression.h"
+
 int main(int argc, char *argv[]) {
     const char *filename = (argc > 1) ? argv[1] : "synthetic_10k_dataset.csv";
     const int max_rows = 4;
@@ -74,8 +76,8 @@ for (int i = 0; i < rows * dim; ++i) {
 }
 // ---- Train on normalized CSV data ----
         printf("\n=== Training Linear Regression on CSV Data ===\n");
-        int loss_epochs = 1000;
-        double *loss_history = malloc(loss_epochs * sizeof(double));
+        int epochs = 10000;
+        double *loss_history = malloc(epochs * sizeof(double));
         if (!loss_history) {
             fprintf(stderr, "Failed to allocate loss history\n");
             free(features); free(targets); free(my_data);
@@ -86,7 +88,7 @@ for (int i = 0; i < rows * dim; ++i) {
             features, targets,
             rows, dim,
             0.01,
-            loss_epochs,
+            epochs,
             "csv_weights.bin",
             loss_history
         );
@@ -96,15 +98,56 @@ for (int i = 0; i < rows * dim; ++i) {
         } else {
             printf("Training complete.\n");
             printf("Loss at epoch 0:    %f\n", loss_history[0]);
-            printf("Loss at epoch 500:  %f\n", loss_history[499]);
-            printf("Loss at epoch 999:  %f\n", loss_history[999]);
+            printf("Loss at epoch 5000: %f\n", loss_history[4999]);
+            printf("Loss at epoch 9999: %f\n", loss_history[9999]);
         }
 
         free(loss_history);
-        free(features);
-        free(targets);
+    // ---- Predict ----
+    printf("\n=== Testing Prediction on Training Data ===\n");
+
+    double *predictions = malloc(rows * sizeof(double));
+    if (!predictions) {
+        fprintf(stderr, "Failed to allocate predictions array\n");
+        free(features); free(targets); free(my_data);
+        return 1;
     }
 
+    int pred_err = predict_linear_regression(
+        features,
+        rows, dim,
+        "csv_weights.bin",
+        predictions
+    );
+
+    if (pred_err != 0) {
+        fprintf(stderr, "Prediction failed (check csv_weights.bin exists and dim matches)\n");
+        free(predictions); free(features); free(targets); free(my_data);
+        return 1;
+    }
+
+    printf("%-6s %-12s %-12s %-10s\n", "Row", "Predicted", "Actual", "Error");
+    printf("----------------------------------------------\n");
+    for (int i = 0; i < rows; i++) {
+        double error = predictions[i] - targets[i];
+        printf("%-6d %-12.4f %-12.4f %-+10.4f\n",
+               i + 1, predictions[i], targets[i], error);
+    }
+
+    // Summary stats
+    double total_error = 0.0;
+    for (int i = 0; i < rows; i++) {
+        double e = predictions[i] - targets[i];
+        total_error += e * e;
+    }
+    double mse = total_error / rows;
+    printf("----------------------------------------------\n");
+    printf("MSE on training data: %.6f\n", mse);
+
+    free(predictions);
+    free(features);
+    free(targets);
     free(my_data);
     return 0;
+}
 }
