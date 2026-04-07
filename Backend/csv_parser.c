@@ -72,7 +72,7 @@ int parse_csv(const char *filename, Finding *findings, int max_findings) {
   // Skip the first line automatically (assuming it contains CSV headers)
   if (!fgets(line, sizeof(line), fp)) {
     fprintf(stderr, "ERROR: CSV is empty.\n");
-    fclose(fp);
+    fclose(fp); 
     return -1;
   }
   

@@ -93,7 +93,6 @@ int train_linear_regression(double *features, double *targets, int n, int dim,
 
 /*
 Function to predict target values using the learned weights from the linear regression model.
-
 */
 
 int predict_linear_regression(double *features, int n, int dim, const char *weight_file, double *predictions)
