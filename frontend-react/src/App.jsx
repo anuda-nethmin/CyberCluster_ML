@@ -344,12 +344,14 @@ function App() {
           >
             {/* Invisible native file picker (positioned over the label) */}
             <input
+              key={mode + (trainResults ? 't' : '') + (predictResults ? 'p' : '')}
               type="file"
               accept=".csv"
               onChange={handleFileChange}
               id="csv-upload"
               className="file-input"
             />
+
             {/* Visual label — shows file name if selected, or upload prompt */}
             <label htmlFor="csv-upload" className="file-label">
               {fileName ? (
