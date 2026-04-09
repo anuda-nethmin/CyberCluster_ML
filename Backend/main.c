@@ -35,7 +35,7 @@ int main(int argc, char *argv[]) {
         printf("Row %d Label: %d\n\n", i + 1, my_data[i].label);
     }
 
-    // ✅ Prepare binary targets for logistic regression
+    // Prepare binary targets for logistic regression
     double *binary_targets = malloc(rows * sizeof(double));
     if (!binary_targets) {
         fprintf(stderr, "Failed to allocate binary targets\n");
@@ -69,7 +69,7 @@ int main(int argc, char *argv[]) {
             rows, dim,
             0.01,
             epochs,
-            "csv_weights.bin",
+            "linear_weights.bin",
             loss_history
         );
 
@@ -96,7 +96,7 @@ int main(int argc, char *argv[]) {
         int pred_err = predict_linear_regression(
             features,
             rows, dim,
-            "csv_weights.bin",
+            "linear_weights.bin",
             predictions
         );
 
@@ -127,11 +127,11 @@ int main(int argc, char *argv[]) {
         }
 
         int log_train_err = train_logistic_regression(
-            features, binary_targets,   // ✅ use correct label column
+            features, binary_targets,   
             rows, dim,
             0.01,
             log_epochs,
-            "log_weights.bin",
+            "logistic_weights.bin",
             log_loss_history
         );
 
@@ -145,9 +145,39 @@ int main(int argc, char *argv[]) {
         }
 
         free(log_loss_history);
+    // ================= Logistic Regression Predictions =================
+        printf("\n=== Testing Logistic Regression Prediction ===\n");
+        double *log_predictions = malloc(rows * sizeof(double));
+        if (!log_predictions) {
+            fprintf(stderr, "Failed to allocate logistic predictions array\n");
+            free(features); free(targets); free(my_data); free(binary_targets);
+            return 1;
+        }
+
+        int log_pred_err = predict_logistic_regression(
+            features,
+            rows, dim,
+            "logistic_weights.bin",
+            log_predictions
+        );
+
+        if (log_pred_err != 0) {
+            fprintf(stderr, "Logistic prediction failed\n");
+            free(log_predictions); free(features); free(targets); free(my_data); free(binary_targets);
+            return 1;
+        }
+
+        printf("%-6s %-15s %-15s %-12s\n", "Row", "Pred_Prob", "Pred_Class", "Actual");
+        printf("----------------------------------------------------------\n");
+        for (int i = 0; i < rows; i++) {
+            int predicted_class = (log_predictions[i] >= 0.5) ? 1 : 0;
+            printf("%-6d %-15.6f %-15d %-12.0f\n",
+                   i + 1, log_predictions[i], predicted_class, binary_targets[i]);
+        }
+
+        free(log_predictions);
     }
 
-    // ================= Cleanup =================
     free(features);
     free(targets);
     free(binary_targets);

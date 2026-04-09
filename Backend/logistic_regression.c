@@ -93,3 +93,51 @@ Used for predicting binary outcomes (0 or 1) based on numerical features, such a
     free(weights); // Free the weights array after saving
     return 0;
 }
+
+/*
+ Function to predict using the trained logistic regression model.
+ */
+int predict_logistic_regression(double *features, int n, int dim, const char *weight_file, double *predictions){
+    FILE *fp = fopen(weight_file, "rb");
+    if (!fp) {
+        return -1; // Model weights file not found
+    }
+    int saved_dim;
+    if(fread(&saved_dim, sizeof(int), 1, fp) != 1 || saved_dim != dim) {
+        fclose(fp);
+        return -1; // Dimension mismatch or read error
+    }
+
+    double *weights = (double *)malloc((dim + 1) * sizeof(double));
+        if (!weights) {
+        fclose(fp);
+    return -1;
+    }
+
+    // Read the weights from the file
+    if (fread(weights, sizeof(double), dim + 1, fp) != (size_t)(dim + 1)) {
+        free(weights);
+        fclose(fp);
+        return -1;
+    }
+    fclose(fp);
+
+    // Generate predictions for each input dataset
+    for (int i = 0; i < n; i++) {
+        double z = weights[0]; // bias term
+        for (int j = 0; j < dim; j++) {
+            z += weights[j + 1] * features[i * dim + j];
+        }
+
+        // Apply sigmoid to get predicted probability and convert to binary classification (0 or 1) based on a threshold of 0.5
+        predictions[i] = sigmoid(z);
+        if (predictions[i] > 0.5) {
+                predictions[i] = 1;
+        } else {
+            predictions[i] = 0;
+        }
+    }
+    free(weights); // Free the weights array after prediction
+    return 0;
+
+}
