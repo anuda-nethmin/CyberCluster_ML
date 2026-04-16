@@ -72,7 +72,7 @@ int parse_csv(const char *filename, Finding *findings, int max_findings) {
   // Skip the first line automatically (assuming it contains CSV headers)
   if (!fgets(line, sizeof(line), fp)) {
     fprintf(stderr, "ERROR: CSV is empty.\n");
-    fclose(fp); 
+    fclose(fp);
     return -1;
   }
   
@@ -171,32 +171,8 @@ int extract_data(const Finding *findings, int n, const char *target_col,
       targ[i] = (double)findings[i].label;
     }
   }
+  //output of the arrays is passed back via pointer-to-pointer parameters, allowing the caller to receive the allocated memory and use it for ML tasks.
   features_out[0] = feat;
   targets_out[0] = targ;
   return 0;
-}
-
-/*
-6. Function for normalizing features using Min-Max scaling
-A nessary step to ensure that all features contribute equally to the models learning process.
-prevents gradient explosion during training loop.
-*/
-void min_max_normalize_features(double *features, int n, int dim) {
-  //loop column by column (feature by feature) to find min and max,
-    for (int d = 0; d < dim; d++) {
-        double min_val = features[d];
-        double max_val = features[d];
-        // First pass to find min and max for the current feature column.
-        for (int i = 1; i < n; i++) {
-            double val = features[i * dim + d];
-            if (val < min_val) min_val = val;
-            if (val > max_val) max_val = val;
-        }
-        double range = max_val - min_val;
-        if (range == 0) range = 1; // Avoid division by zero
-        // Second pass to normalize the feature values to the [0, 1] range.
-        for (int i = 0; i < n; i++) {
-            features[i * dim + d] = (features[i * dim + d] - min_val) / range;
-        }
-    }
-}
+} 
