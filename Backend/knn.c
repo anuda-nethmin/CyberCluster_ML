@@ -44,8 +44,7 @@ int predict_knn(const double *new_features, const double *all_features,
 
 // 1. Pre-allocate an array to score distance to every trainig point
 Neighbor *neighbors = (Neighbor *)malloc(n * sizeof(Neighbor));
-if (!neighbors) {
-    return -1; // Memory allocation failed
+if (!neighbors)return -1; // Memory allocation failed
 
 // 2. Compute distance from the new point to every training point
 for (int i = 0; i < n; i++) {
@@ -79,22 +78,70 @@ return (count_ones > count_zeros) ? 1 : 0;
 writes the full dataset (features and labels) to a binary file for later use in prediction. 
 */
 
-int save_training_data(const double *features, const double *labels, int n, int dim) {
-    FILE *fp = fopen(filepath, "wb");
-    if (!fp) return -1; // Failed to open file
+int save_knn_training_data(const double *features, const double *labels,
+                           int n, int dim, const char *filepath) {
+  FILE *fp = fopen(filepath, "wb");
+  if (!fp) return -1;
 
-    //Write the dataset dimensions first
-    fwrite(&n, sizeof(int), 1, fp);
-    fwrite(&dim, sizeof(int), 1, fp);
+  // Write the dataset dimensions first
+  fwrite(&n, sizeof(int), 1, fp);
+  fwrite(&dim, sizeof(int), 1, fp);
 
-    //Write the full flatten features matrix [n x dim]
-    fwrite(features, sizeof(double), n * dim, fp);
+  // Write the full flattened feature matrix [n x dim]
+  fwrite(features, sizeof(double), n * dim, fp);
 
-    //Write the labels array [n]
-    fwrite(labels, sizeof(double), n, fp);
+  // Write the label array [n]
+  fwrite(labels, sizeof(double), n, fp);
 
-    fclose(fp);
-    return 0; // Success
+  fclose(fp);
+  return 0;
 }
 
-//Predict
+//Function to load a training dataset from a binary file
+int load_knn_training_data(const char *filepath, double **features_out,
+                           double **labels_out, int *n_out, int *dim_out) {
+  FILE *fp = fopen(filepath, "rb");
+  if (!fp) return -1;
+
+  int n, dim;
+  // Read dataset dimensions
+  if (fread(&n, sizeof(int), 1, fp) != 1 ||
+      fread(&dim, sizeof(int), 1, fp) != 1) {
+    fclose(fp);
+    return -1;
+  }
+
+  // Allocate memory for features and labels
+  double *features = (double *)malloc(n * dim * sizeof(double));
+  double *labels = (double *)malloc(n * sizeof(double));
+  if (!features || !labels) {
+    if (features) free(features);
+    if (labels) free(labels);
+    fclose(fp);
+    return -1;
+  }
+
+  // Read the feature matrix
+  if (fread(features, sizeof(double), n * dim, fp) != (size_t)(n * dim)) {
+    free(features);
+    free(labels);
+    fclose(fp);
+    return -1;
+  }
+
+  // Read the label array
+  if (fread(labels, sizeof(double), n, fp) != (size_t)n) {
+    free(features);
+    free(labels);
+    fclose(fp);
+    return -1;
+  }
+
+  fclose(fp);
+
+  *features_out = features;
+  *labels_out = labels;
+  *n_out = n;
+  *dim_out = dim;
+  return 0;
+}

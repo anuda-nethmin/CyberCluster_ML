@@ -175,4 +175,27 @@ int extract_data(const Finding *findings, int n, const char *target_col,
   features_out[0] = feat;
   targets_out[0] = targ;
   return 0;
-} 
+}
+
+void min_max_normalize_features(double *features, int n, int dim) {
+  // Loop column by column (dimension by dimension)
+  for (int d = 0; d < dim; d++) {
+    double min_val = features[d];
+    double max_val = features[d];
+    
+    // First Pass: find mathematical bounds of the entire column vertically
+    for (int i = 1; i < n; i++) {
+      double v = features[i * dim + d];
+      if (v < min_val) min_val = v;
+      if (v > max_val) max_val = v;
+    }
+    
+    double range = max_val - min_val;
+    if (range < 1e-9) range = 1.0; // Prevent div-by-zero on completely uniform data columns
+    
+    // Second Pass: apply standard mapping computation vertically
+    for (int i = 0; i < n; i++) {
+      features[i * dim + d] = (features[i * dim + d] - min_val) / range;
+    }
+  }
+}

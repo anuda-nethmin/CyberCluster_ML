@@ -16,4 +16,10 @@
 int predict_knn(const double *new_features, const double *all_features,
                 const double *all_labels, int n, int dim, int k);
 
+int save_knn_training_data(const double *features, const double *labels,
+                           int n, int dim, const char *filepath);
+
+int load_knn_training_data(const char *filepath, double **features_out,
+                           double **labels_out, int *n_out, int *dim_out);
+                
 #endif // KNN_H
