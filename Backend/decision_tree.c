@@ -204,3 +204,77 @@ static int classify(const TreeNode *t, const double *point, int dim) {
   }
   return t[node].predicted_class;
 }
+
+//Function to train the decision tree classifier
+int train_decision_tree(const double *features, const double *labels, int n,
+                        int dim, int max_depth, const char *weights_file,
+                        double *out_accuracy, int *out_depth, int *out_nodes) {
+
+  /* Reset global tree state */
+  node_count = 0;
+  tree_depth = 0;
+  memset(tree, 0, sizeof(tree));
+
+  /* Build index array [0, 1, 2, ..., n-1] */
+  int *indices = (int *)malloc(n * sizeof(int));
+  if (!indices)
+    return -1;
+  for (int i = 0; i < n; i++)
+    indices[i] = i;
+
+  /* Build the tree recursively */
+  build_tree(features, labels, indices, n, dim, 0, max_depth);
+  free(indices);
+
+  /* ── Calculate training accuracy ─────────────────────────────── */
+  int correct = 0;
+  for (int i = 0; i < n; i++) {
+    int pred = classify(tree, &features[i * dim], dim);
+    if (pred == (int)labels[i])
+      correct++;
+  }
+  *out_accuracy = (double)correct / n;
+  *out_depth = tree_depth;
+  *out_nodes = node_count;
+
+  /* ── Save tree to disk ───────────────────────────────────────── */
+  FILE *fp = fopen(weights_file, "wb");
+  if (!fp)
+    return -1;
+
+  fwrite(&node_count, sizeof(int), 1, fp);
+  fwrite(&dim, sizeof(int), 1, fp);
+  fwrite(tree, sizeof(TreeNode), node_count, fp);
+  fclose(fp);
+
+  return 0;
+}
+
+//Function to predict with the trained decision tree
+int predict_decision_tree(const double *features, int n, int dim,
+                          const char *weights_file, double *predictions) {
+
+  FILE *fp = fopen(weights_file, "rb");
+  if (!fp)
+    return -1;
+
+  int saved_count, saved_dim;
+  fread(&saved_count, sizeof(int), 1, fp);
+  fread(&saved_dim, sizeof(int), 1, fp);
+
+  if (saved_dim != dim || saved_count > MAX_NODES) {
+    fclose(fp);
+    return -1;
+  }
+
+  TreeNode loaded_tree[MAX_NODES];
+  fread(loaded_tree, sizeof(TreeNode), saved_count, fp);
+  fclose(fp);
+
+  /* Classify each input row */
+  for (int i = 0; i < n; i++) {
+    predictions[i] = (double)classify(loaded_tree, &features[i * dim], dim);
+  }
+
+  return 0;
+}
