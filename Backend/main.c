@@ -6,12 +6,11 @@
 #include "logistic_regression.h"
 #include "knn.h"
 #include "decision_tree.h"
+#include "kmeans.h"
 
 int main(int argc, char *argv[]) {
 
-    /* ─────────────────────────────────────────────
-     * 1. LOAD CSV DATA
-     * ───────────────────────────────────────────── */
+    /* 1. LOAD CSV DATA */
     const char *filename = (argc > 1) ? argv[1] : "synthetic_10k_dataset.csv";
     const int max_rows = 5;
 
@@ -46,9 +45,7 @@ int main(int argc, char *argv[]) {
 
     min_max_normalize_features(features, rows, dim);
 
-    /* ═══════════════════════════════════════
-     * LINEAR REGRESSION
-     * ═══════════════════════════════════════ */
+    /* LINEAR REGRESSION */
     printf("\n=== Linear Regression ===\n");
 
     int epochs = 10000;
@@ -68,9 +65,7 @@ int main(int argc, char *argv[]) {
     free(loss);
     free(pred_lr);
 
-    /* ═══════════════════════════════════════
-     * LOGISTIC REGRESSION
-     * ═══════════════════════════════════════ */
+    /* LOGISTIC REGRESSION */
     printf("\n=== Logistic Regression ===\n");
 
     double *log_loss = malloc(epochs * sizeof(double));
@@ -91,9 +86,7 @@ int main(int argc, char *argv[]) {
     free(log_loss);
     free(pred_log);
 
-    /* ═══════════════════════════════════════
-     * KNN
-     * ═══════════════════════════════════════ */
+    /* KNN */
     printf("\n=== KNN ===\n");
 
     save_knn_training_data(features, binary_targets, rows, dim, "models/knn.bin");
@@ -123,9 +116,7 @@ int main(int argc, char *argv[]) {
     free(knn_feat);
     free(knn_lbl);
 
-    /* ═══════════════════════════════════════
-     * DECISION TREE
-     * ═══════════════════════════════════════ */
+    /* DECISION TREE */
     printf("\n=== Decision Tree ===\n");
 
     int max_depth = 5;
@@ -161,7 +152,59 @@ int main(int argc, char *argv[]) {
 
     free(pred_dt);
 
-    /* Cleanup */
+    /* K-MEANS CLUSTERING */
+    printf("\n=== K-Means Clustering ===\n");
+
+    int k_clusters     = 3;
+    int km_max_iter    = 100;
+    int km_actual_iter = 0;
+
+    double *wcss_history = malloc(km_max_iter * sizeof(double));
+    double *km_preds     = malloc(rows * sizeof(double));
+
+    if (!wcss_history || !km_preds) {
+        fprintf(stderr, "K-Means memory allocation failed\n");
+        free(wcss_history);
+        free(km_preds);
+    } else {
+        int km_status = train_kmeans(features, rows, dim,
+                                     k_clusters, km_max_iter,
+                                     "models/kmeans.bin",
+                                     wcss_history, &km_actual_iter);
+
+        if (km_status != 0) {
+            fprintf(stderr, "K-Means training failed\n");
+        } else {
+            printf("Converged in %d iteration(s)\n", km_actual_iter);
+
+            /* Print WCSS curve — should decrease each iteration */
+            printf("WCSS per iteration:\n");
+            for (int i = 0; i < km_actual_iter; i++)
+                printf("  iter %3d: %.6f\n", i + 1, wcss_history[i]);
+
+            /* Assign clusters to the same rows used for training */
+            int pm_status = predict_kmeans(features, rows, dim,
+                                           "models/kmeans.bin", km_preds);
+
+            if (pm_status != 0) {
+                fprintf(stderr, "K-Means predict failed\n");
+            } else {
+                /*
+                 * K-Means is unsupervised — cluster IDs won't necessarily
+                 * match label values. Print both so you can eyeball alignment.
+                 */
+                printf("\nCluster assignments:\n");
+                for (int i = 0; i < rows; i++)
+                    printf("KM  Row %d: Cluster=%d  Actual_label=%d\n",
+                           i + 1, (int)km_preds[i], (int)binary_targets[i]);
+            }
+        }
+
+        free(wcss_history);
+        free(km_preds);
+    }
+
+    /* CLEANUP */
     free(features);
     free(targets);
     free(binary_targets);
