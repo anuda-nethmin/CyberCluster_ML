@@ -11,11 +11,12 @@ gcc -Wall -Wextra -O3 -c linear_regression.c -o build/linear_regression.o
 gcc -Wall -Wextra -O3 -c logistic_regression.c -o build/logistic_regression.o
 gcc -Wall -Wextra -O3 -c knn.c -o build/knn.o
 gcc -Wall -Wextra -O3 -c decision_tree.c -o build/decision_tree.o
+gcc -Wall -Wextra -O3 -c kmeans.c -o build/kmeans.o
 
 
 if ($?) {
     # Link them all together into the final executable with the math library (-lm)
-    gcc -Wall -Wextra -O3 -o build/ml_engine.exe build/main.o build/csv_parser.o build/linear_regression.o build/logistic_regression.o build/knn.o build/decision_tree.o -lm
+    gcc -Wall -Wextra -O3 -o build/ml_engine.exe build/main.o build/csv_parser.o build/linear_regression.o build/logistic_regression.o build/knn.o build/decision_tree.o build/kmeans.o -lm
     
     if ($?) {
         Write-Host "Build Complete! Output saved to build/ml_engine.exe" -ForegroundColor Green

@@ -112,14 +112,14 @@ static int build_tree(const double *features, const double *labels,
   //Find the best split
   int best_feature = -1;
   double best_threshold = 0.0;
-  double best_gini = 2.0; /* Worse than any possible Gini */
+  double best_gini = 2.0; // Worse than any possible Gini
 
-  /* Temporary arrays for left/right partition */
+  // Temporary arrays for left/right partition
   int *left_idx = (int *)malloc(count * sizeof(int));
   int *right_idx = (int *)malloc(count * sizeof(int));
 
   for (int f = 0; f < dim; f++) {
-    /* Try each unique value in this feature as a threshold */
+    //Try each unique value in this feature as a threshold
     for (int i = 0; i < count; i++) {
       double thresh = features[indices[i] * dim + f];
 
@@ -132,11 +132,11 @@ static int build_tree(const double *features, const double *labels,
         }
       }
 
-      /* Skip trivial splits (everything on one side) */
+      // Skip trivial splits (everything on one side)
       if (left_count == 0 || right_count == 0)
         continue;
 
-      /* Weighted Gini of this split */
+      //Weighted Gini of this split
       double g_left = gini_impurity(left_idx, left_count, labels);
       double g_right = gini_impurity(right_idx, right_count, labels);
       double weighted = ((double)left_count / count) * g_left +
@@ -150,7 +150,7 @@ static int build_tree(const double *features, const double *labels,
     }
   }
 
-  /* If no useful split found, make a leaf */
+  // If no useful split found, make a leaf
   if (best_feature == -1 || best_gini >= current_gini - 1e-9) {
     free(left_idx);
     free(right_idx);
@@ -210,12 +210,12 @@ int train_decision_tree(const double *features, const double *labels, int n,
                         int dim, int max_depth, const char *weights_file,
                         double *out_accuracy, int *out_depth, int *out_nodes) {
 
-  /* Reset global tree state */
+  // Reset global tree state
   node_count = 0;
   tree_depth = 0;
   memset(tree, 0, sizeof(tree));
 
-  /* Build index array [0, 1, 2, ..., n-1] */
+  // Build index array [0, 1, 2, ..., n-1]
   int *indices = (int *)malloc(n * sizeof(int));
   if (!indices)
     return -1;
@@ -226,7 +226,7 @@ int train_decision_tree(const double *features, const double *labels, int n,
   build_tree(features, labels, indices, n, dim, 0, max_depth);
   free(indices);
 
-  /* ── Calculate training accuracy ─────────────────────────────── */
+  //Calculate training accuracy
   int correct = 0;
   for (int i = 0; i < n; i++) {
     int pred = classify(tree, &features[i * dim], dim);
@@ -237,7 +237,7 @@ int train_decision_tree(const double *features, const double *labels, int n,
   *out_depth = tree_depth;
   *out_nodes = node_count;
 
-  /* ── Save tree to disk ───────────────────────────────────────── */
+  //Save tree to disk
   FILE *fp = fopen(weights_file, "wb");
   if (!fp)
     return -1;
@@ -271,7 +271,7 @@ int predict_decision_tree(const double *features, int n, int dim,
   fread(loaded_tree, sizeof(TreeNode), saved_count, fp);
   fclose(fp);
 
-  /* Classify each input row */
+  //Classify each input row
   for (int i = 0; i < n; i++) {
     predictions[i] = (double)classify(loaded_tree, &features[i * dim], dim);
   }
