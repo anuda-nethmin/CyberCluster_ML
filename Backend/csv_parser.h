@@ -5,9 +5,11 @@ Contains the data structures mapping directly to our CyberCluster
 */
 #ifndef CSV_PARSER_H
 #define CSV_PARSER_H
+
 #include <stdio.h>
-#define MAX_FINDINGS 4096   // Max rows (vulnerabilities) per CSV
-#define MAX_LINE 4096 
+
+#define MAX_FINDINGS 10000  // Max rows (vulnerabilities) per CSV
+#define MAX_LINE 10000  // Max characters per line in the CSV
 
 /*
 Creating the core data  structure to hold parsed CSV data, 

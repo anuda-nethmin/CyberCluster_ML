@@ -8,6 +8,8 @@ parses command-line arguments, loads data, and dispatches to the appropriate mod
 #include <string.h>
 
 // Project headers for model interfaces
+#include "csv_parser.h"
+#include "json_output.h"
 #include "linear_regression.h"
 #include "logistic_regression.h"
 #include "decision_tree.h"
@@ -24,16 +26,35 @@ static void print_usage(const char *prog){
 
 int main(int argc, char *argv[])  
 {
+    // Requires at least mode, csv, model
     if (argc < 4) {
-        fprintf(stderr, "Error: Insufficient arguments. Expected at least 4, got %d.\n", argc - 1);
         print_usage(argv[0]);
-        return EXIT_FAILURE;
+        return 1;
     }
 
+    // Parses required arguments
+    const char *mode = argv[1];
+    const char *csv_file = argv[2];
+    const char *model = argv[3];
+
+    // Allocate memory for the parsed csv rowes
+    Finding *findings = (Finding *)malloc(MAX_FINDINGS * sizeof(Finding));
+    if (!findings) {
+        print_error("Memory allocation failed for findings");
+        return 1;
+    }
+    // Parse CSV file into the findings array; n = number of valid rows
+    int n = parse_csv(csv_file, findings, MAX_FINDINGS);
+    if (n <= 0) {
+        print_error("No findings parsed from CSV");
+        free(findings);
+        return 1;
+    }
     printf("Received %d arguments:\n", argc - 1);
     for (int i = 1; i < argc; i++) {
         printf("  arg[%d]: %s\n", i, argv[i]);
     }
+    printf("  Number of findings: %d\n", n);
 
-    return EXIT_SUCCESS;
+    // Train mode
 }
