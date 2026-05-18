@@ -386,7 +386,9 @@ function App() {
             >
               <option value="linear">Linear Regression (MSE)</option>
               <option value="logistic">Logistic Regression (Log-Loss)</option>
-              <option value="logistic">GG (Log-Loss)</option>
+              <option value="knn">K-Nearest Neighbors (KNN)</option>
+              <option value="kmeans">K-Means Clustering</option>
+              <option value="dtree">Decision Tree</option>
             </select>
           </div>
 
