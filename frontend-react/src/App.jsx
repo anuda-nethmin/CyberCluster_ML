@@ -344,14 +344,12 @@ function App() {
           >
             {/* Invisible native file picker (positioned over the label) */}
             <input
-              key={mode + (trainResults ? 't' : '') + (predictResults ? 'p' : '')}
               type="file"
               accept=".csv"
               onChange={handleFileChange}
               id="csv-upload"
               className="file-input"
             />
-
             {/* Visual label — shows file name if selected, or upload prompt */}
             <label htmlFor="csv-upload" className="file-label">
               {fileName ? (
@@ -386,9 +384,7 @@ function App() {
             >
               <option value="linear">Linear Regression (MSE)</option>
               <option value="logistic">Logistic Regression (Log-Loss)</option>
-              <option value="knn">K-Nearest Neighbors (KNN)</option>
-              <option value="kmeans">K-Means Clustering</option>
-              <option value="dtree">Decision Tree</option>
+              <option value="logistic">GG (Log-Loss)</option>
             </select>
           </div>
 
@@ -631,7 +627,10 @@ function App() {
                         <td><SeverityBadge severity={f.severity} /></td>
                         <td className="evidence-cell">{f.evidence}</td>
                         {/* Show actual value for comparison */}
-                        <td>{targetCol === "cvss" ? f.cvss : f.label}</td>
+                        <td>{targetCol === "cvss"
+                          ? (predictResults.results.every(r => Number(r.cvss) === 0) ? "-" : f.cvss)
+                          : (predictResults.results.every(r => Number(r.label) === 0) ? "-" : f.label)
+                        }</td>
                         {/* Show the model's predicted value, rounded to 3 d.p. */}
                         <td style={{ fontWeight: "bold" }}>
                           {Number(f[`predicted_${targetCol}`]).toFixed(3)}
