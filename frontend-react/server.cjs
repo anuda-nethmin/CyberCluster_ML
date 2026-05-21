@@ -48,8 +48,16 @@ if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir);  // Create the folder on first run
 }
 
-// multer stores uploaded files in the uploadDir with auto-generated names
-const upload = multer({ dest: uploadDir });
+// multer stores uploaded files in the uploadDir with auto-generated names and .csv extension
+const upload = multer({ 
+    dest: uploadDir,
+    storage: multer.diskStorage({
+        destination: uploadDir,
+        filename: (req, file, cb) => {
+            cb(null, Date.now() + '.csv');  // Add .csv extension to all uploads
+        }
+    })
+});
 
 // Backend Binary Path
 // Resolve the absolute path to the compiled C backend executable.

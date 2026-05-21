@@ -101,12 +101,22 @@ function App() {
   const [fileName, setFileName] = useState("");
 
   // Model configuration — which algorithm and target column to use
-  const [model, setModel] = useState("linear");       // "linear" or "logistic"
+  const [model, setModel] = useState("linear");       // "linear", "logistic", "knn", "kmeans", or "dtree"
   const [targetCol, setTargetCol] = useState("cvss");  // "cvss" (continuous) or "label" (binary)
 
-  // Hyper-parameters (only used during training)
+  // Hyper-parameters — Linear / Logistic (gradient descent models)
   const [lr, setLr] = useState(0.01);       // Learning rate (α) — controls step size
   const [epochs, setEpochs] = useState(100); // Number of gradient-descent iterations
+
+  // Hyper-parameters — KNN
+  const [k, setK] = useState(5);             // Number of nearest neighbours to consider
+
+  // Hyper-parameters — K-Means
+  const [kClusters, setKClusters] = useState(3);  // Number of clusters to partition data into
+  const [maxIter, setMaxIter] = useState(100);      // Maximum iterations for convergence
+
+  // Hyper-parameters — Decision Tree
+  const [maxDepth, setMaxDepth] = useState(5);  // Maximum depth of the tree (controls overfitting)
 
   // API response data
   const [trainResults, setTrainResults] = useState(null);    // JSON from /api/train
@@ -184,14 +194,29 @@ function App() {
     // Build a multipart/form-data body with the CSV file and all parameters
     const formData = new FormData();
     formData.append("csv", file);                       // The CSV file blob
-    formData.append("model", model);                    // "linear" or "logistic"
+    formData.append("model", model);                    // "linear", "logistic", "knn", "kmeans", or "dtree"
     formData.append("target_col", targetCol);            // "cvss" or "label"
-    formData.append("lr", lr.toString());                // Learning rate as string
-    formData.append("epochs", epochs.toString());        // Epoch count as string
+
+    // Model-specific hyperparameters appended to the form data
+    if (model === "knn") {
+      formData.append("k", k.toString());
+      formData.append("lr", "0");       // Dummy value — ignored by backend for KNN
+      formData.append("epochs", "1");   // Dummy value — ignored by backend for KNN
+    } else if (model === "kmeans") {
+      formData.append("lr", kClusters.toString());   // lr position carries k_clusters
+      formData.append("epochs", maxIter.toString()); // epochs position carries max_iter
+    } else if (model === "dtree") {
+      formData.append("lr", maxDepth.toString());    // lr position carries max_depth
+      formData.append("epochs", "1");                // epochs ignored for dtree
+    } else {
+      formData.append("lr", lr.toString());                // Learning rate as string
+      formData.append("epochs", epochs.toString());        // Epoch count as string
+    }
 
     try {
       // POST to the Express proxy server (server.cjs) on port 4000
-      const response = await fetch("http://localhost:4000/api/train", {
+      const apiUrl = import.meta.env.DEV ? "http://localhost:4000" : "";
+      const response = await fetch(`${apiUrl}/api/train`, {
         method: "POST",
         body: formData,  // fetch automatically sets Content-Type to multipart/form-data
       });
@@ -227,8 +252,16 @@ function App() {
     formData.append("model", model);
     formData.append("target_col", targetCol);
 
+    // KNN and K-Means need k at prediction time too
+    if (model === "knn") {
+      formData.append("k", k.toString());
+    } else if (model === "kmeans") {
+      formData.append("k", kClusters.toString());
+    }
+
     try {
-      const response = await fetch("http://localhost:4000/api/predict", {
+      const apiUrl = import.meta.env.DEV ? "http://localhost:4000" : "";
+      const response = await fetch(`${apiUrl}/api/predict`, {
         method: "POST",
         body: formData,
       });
@@ -251,13 +284,14 @@ function App() {
    * for the currently selected model.  This forces the user to retrain
    * before making new predictions.
    *
-   * Sends JSON { model: "linear"|"logistic" } and shows a temporary
-   * success message that auto-clears after 3 seconds.
+   * Sends JSON { model: "linear"|"logistic"|"knn"|"kmeans"|"dtree" }
+   * and shows a temporary success message that auto-clears after 3 seconds.
    */
   async function handleReset() {
     setLoading(true); setResetMsg(""); setError("");
     try {
-      const response = await fetch("http://localhost:4000/api/reset", {
+      const apiUrl = import.meta.env.DEV ? "http://localhost:4000" : "";
+      const response = await fetch(`${apiUrl}/api/reset`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ model }), // Tell the server which model to reset
@@ -344,6 +378,7 @@ function App() {
           >
             {/* Invisible native file picker (positioned over the label) */}
             <input
+              key={mode}
               type="file"
               accept=".csv"
               onChange={handleFileChange}
@@ -371,7 +406,7 @@ function App() {
         <div className="sidebar-divider" />
 
         {/* ── Model Selection ──
-            Algorithm: Linear Regression (MSE loss) or Logistic Regression (Log-Loss)
+            Algorithm: Linear, Logistic, KNN, K-Means, or Decision Tree
             Target Column: cvss (continuous) or label (binary) */}
         <div className="sidebar-section">
           <h3 className="sidebar-section-title">🤖 Model Setup</h3>
@@ -380,11 +415,18 @@ function App() {
             <select
               className="select-input"
               value={model}
-              onChange={(e) => setModel(e.target.value)}
+              onChange={(e) => {
+                const newModel = e.target.value;
+                setModel(newModel);
+                // KNN, K-Means, and Decision Tree only support label target
+                if (newModel === "knn" || newModel === "kmeans" || newModel === "dtree") setTargetCol("label");
+              }}
             >
               <option value="linear">Linear Regression (MSE)</option>
               <option value="logistic">Logistic Regression (Log-Loss)</option>
-              <option value="logistic">GG (Log-Loss)</option>
+              <option value="knn">K-Nearest Neighbors (KNN)</option>
+              <option value="kmeans">K-Means Clustering</option>
+              <option value="dtree">Decision Tree</option>
             </select>
           </div>
 
@@ -394,58 +436,142 @@ function App() {
               className="select-input"
               value={targetCol}
               onChange={(e) => setTargetCol(e.target.value)}
+              disabled={model === "knn" || model === "kmeans" || model === "dtree"}
             >
               <option value="cvss">CVSS Score (Continuous)</option>
               <option value="label">Label (Binary 0 / 1)</option>
             </select>
             {/* Hint reminding the user to match model type and target */}
             <span style={{ fontSize: '0.75rem', color: '#888', marginTop: '4px', display: 'block' }}>
-              Ensure target matches the model type.
+              {model === "knn"
+                ? "KNN uses binary classification — target locked to 'label'."
+                : model === "kmeans"
+                  ? "K-Means is unsupervised — groups findings into clusters."
+                  : model === "dtree"
+                    ? "Decision Tree uses binary classification — target locked to 'label'."
+                    : "Ensure target matches the model type."}
             </span>
           </div>
         </div>
 
         {/* ── Hyper-parameters (Training Only) ──
             These controls are conditionally rendered only when mode === "train".
-            Learning Rate slider: 0.001 → 0.2
-            Epochs slider: 10 → 2000 */}
+            Each model type shows its own relevant hyper-parameter controls. */}
         {mode === "train" && (
           <>
             <div className="sidebar-divider" />
             <div className="sidebar-section">
               <h3 className="sidebar-section-title">🎛️ Hyperparameters</h3>
 
-              {/* Learning Rate (α) — step size for gradient descent */}
-              <div className="param-group">
-                <label className="param-label">
-                  Learning Rate (α): <strong>{lr}</strong>
-                </label>
-                <input
-                  type="range"
-                  min="0.001"
-                  max="0.2"
-                  step="0.001"
-                  value={lr}
-                  onChange={(e) => setLr(Number(e.target.value))}
-                  className="slider-input"
-                />
-              </div>
+              {model === "knn" ? (
+                /* KNN-specific: only K (number of neighbors) */
+                <div className="param-group">
+                  <label className="param-label">
+                    K (Neighbors): <strong>{k}</strong>
+                  </label>
+                  <input
+                    type="range"
+                    min="1"
+                    max="25"
+                    step="2"
+                    value={k}
+                    onChange={(e) => setK(Number(e.target.value))}
+                    className="slider-input"
+                  />
+                  <span style={{ fontSize: '0.75rem', color: '#888', marginTop: '4px', display: 'block' }}>
+                    Use odd numbers to avoid ties in voting.
+                  </span>
+                </div>
+              ) : model === "kmeans" ? (
+                /* K-Means: K clusters + max iterations */
+                <>
+                  <div className="param-group">
+                    <label className="param-label">
+                      K (Clusters): <strong>{kClusters}</strong>
+                    </label>
+                    <input
+                      type="range"
+                      min="2"
+                      max="10"
+                      step="1"
+                      value={kClusters}
+                      onChange={(e) => setKClusters(Number(e.target.value))}
+                      className="slider-input"
+                    />
+                    <span style={{ fontSize: '0.75rem', color: '#888', marginTop: '4px', display: 'block' }}>
+                      Number of groups to partition data into.
+                    </span>
+                  </div>
+                  <div className="param-group">
+                    <label className="param-label">
+                      Max Iterations: <strong>{maxIter}</strong>
+                    </label>
+                    <input
+                      type="range"
+                      min="10"
+                      max="200"
+                      step="10"
+                      value={maxIter}
+                      onChange={(e) => setMaxIter(Number(e.target.value))}
+                      className="slider-input"
+                    />
+                  </div>
+                </>
+              ) : model === "dtree" ? (
+                /* Decision Tree: max depth */
+                <div className="param-group">
+                  <label className="param-label">
+                    Max Depth: <strong>{maxDepth}</strong>
+                  </label>
+                  <input
+                    type="range"
+                    min="1"
+                    max="20"
+                    step="1"
+                    value={maxDepth}
+                    onChange={(e) => setMaxDepth(Number(e.target.value))}
+                    className="slider-input"
+                  />
+                  <span style={{ fontSize: '0.75rem', color: '#888', marginTop: '4px', display: 'block' }}>
+                    Deeper trees capture more patterns but risk overfitting.
+                  </span>
+                </div>
+              ) : (
+                /* Linear/Logistic: lr + epochs */
+                <>
+                  {/* Learning Rate (α) — step size for gradient descent */}
+                  <div className="param-group">
+                    <label className="param-label">
+                      Learning Rate (α): <strong>{lr}</strong>
+                    </label>
+                    <input
+                      type="range"
+                      min="0.001"
+                      max="0.2"
+                      step="0.001"
+                      value={lr}
+                      onChange={(e) => setLr(Number(e.target.value))}
+                      className="slider-input"
+                    />
+                  </div>
 
-              {/* Epochs — how many times gradient descent iterates */}
-              <div className="param-group">
-                <label className="param-label">
-                  Epochs: <strong>{epochs}</strong>
-                </label>
-                <input
-                  type="range"
-                  min="10"
-                  max="2000"
-                  step="10"
-                  value={epochs}
-                  onChange={(e) => setEpochs(Number(e.target.value))}
-                  className="slider-input"
-                />
-              </div>
+                  {/* Epochs — how many times gradient descent iterates */}
+                  <div className="param-group">
+                    <label className="param-label">
+                      Epochs: <strong>{epochs}</strong>
+                    </label>
+                    <input
+                      type="range"
+                      min="10"
+                      max="2000"
+                      step="10"
+                      value={epochs}
+                      onChange={(e) => setEpochs(Number(e.target.value))}
+                      className="slider-input"
+                    />
+                  </div>
+                </>
+              )}
             </div>
           </>
         )}
@@ -461,7 +587,7 @@ function App() {
             disabled={loading}
             style={{ width: '100%', padding: '0.75rem', background: 'transparent', border: '1px solid #C41E3A', color: '#C41E3A', borderRadius: '4px', cursor: 'pointer', marginBottom: '1rem', fontWeight: 'bold' }}
           >
-            🗑️ Clear {model === "linear" ? "Linear" : "Logistic"} Model Memory
+            🗑️ Clear {model === "linear" ? "Linear" : model === "logistic" ? "Logistic" : model === "knn" ? "KNN" : model === "kmeans" ? "K-Means" : "Decision Tree"} Model Memory
           </button>
           {/* Temporary success message — auto-clears after 3 seconds */}
           {resetMsg && <div style={{ color: '#27ae60', fontSize: '0.8rem', textAlign: 'center', marginBottom: '1rem' }}>{resetMsg}</div>}
@@ -518,7 +644,12 @@ function App() {
         {loading && (
           <div className="loading-container">
             <div className="spinner" />
-            <p>{mode === "train" ? "Training model weights via gradient descent..." : "Executing inference..."}</p>
+            <p>{mode === "train"
+              ? (model === "knn" ? "Storing training data for KNN classification..."
+                : model === "kmeans" ? "Running K-Means clustering iterations..."
+                  : model === "dtree" ? "Building decision tree from training data..."
+                    : "Training model weights via gradient descent...")
+              : "Executing inference..."}</p>
           </div>
         )}
 
@@ -527,59 +658,132 @@ function App() {
          *  Rendered only when: mode === "train" AND trainResults exists
          *  AND we're not currently loading.
          *
-         *  Contains:
-         *    1. Four MetricCards showing key stats
-         *    2. A Recharts LineChart plotting the loss curve
+         *  Contains model-specific results:
+         *    - KNN: sample count, k, dimensions
+         *    - K-Means: cluster count, iterations, WCSS curve
+         *    - Decision Tree: accuracy, depth, node count
+         *    - Linear/Logistic: epochs, final loss, loss curve chart
          * ───────────────────────────────────────────────────────────── */}
         {mode === "train" && trainResults && !loading && (
           <>
             <div className="section-divider" />
             <div className="section-header">
               <h2 className="section-title">📈 Training Results</h2>
-              <p className="section-subtitle">Model weights saved successfully</p>
+              <p className="section-subtitle">
+                {model === "knn" ? "Training data stored for KNN classification"
+                  : model === "kmeans" ? "K-Means clustering complete"
+                    : model === "dtree" ? "Decision tree built successfully"
+                      : "Model weights saved successfully"}
+              </p>
             </div>
 
-            {/* Metric cards — 4-column grid on desktop, 2-col on tablet, 1-col on mobile */}
-            <div className="metrics-grid">
-              <MetricCard value={trainResults.epochs} label="Epochs Trained" />
-              <MetricCard
-                value={trainResults.loss_history[trainResults.loss_history.length - 1].toFixed(4)}
-                label="Final Training Loss"
-              />
-              <MetricCard value={model.toUpperCase()} label="Model Architecture" />
-              <MetricCard value={targetCol} label="Optimized Target" />
-            </div>
-
-            {/* Loss Curve Chart — shows how the loss decreased over epochs */}
-            <div className="section-header">
-              <h2 className="section-title">📉 Loss Curve (Gradient Descent)</h2>
-            </div>
-            <div className="chart-card" style={{ height: "400px" }}>
-              {/* ResponsiveContainer makes the chart fill its parent's width */}
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={formatLossData()} margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
-                  {/* Dashed background grid */}
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                  {/* X-axis: epoch number */}
-                  <XAxis dataKey="epoch" name="Epoch" stroke="#888" label={{ value: 'Epochs', position: 'insideBottom', offset: -10 }} />
-                  {/* Y-axis: loss value */}
-                  <YAxis stroke="#888" label={{ value: 'Loss (MSE / Log-Loss)', angle: -90, position: 'insideLeft', offset: -10 }} />
-                  {/* Tooltip appears on hover with styled card */}
-                  <Tooltip
-                    contentStyle={{
-                      background: "#fff",
-                      border: "1px solid #eee",
-                      borderRadius: "8px",
-                      boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
-                    }}
+            {model === "knn" ? (
+              /* ── KNN results — no loss chart, show data storage metrics ── */
+              <div className="metrics-grid">
+                <MetricCard value={trainResults.training_samples || "—"} label="Training Samples Stored" />
+                <MetricCard value={trainResults.k || k} label="K (Neighbors)" />
+                <MetricCard value={trainResults.dimensions || "—"} label="Feature Dimensions" />
+                <MetricCard value="KNN" label="Model Type" />
+              </div>
+            ) : model === "kmeans" ? (
+              /* ── K-Means results — WCSS loss curve + cluster metrics ── */
+              <>
+                <div className="metrics-grid">
+                  <MetricCard value={trainResults.k_clusters || kClusters} label="Clusters (K)" />
+                  <MetricCard value={trainResults.iterations || "—"} label="Iterations" />
+                  <MetricCard
+                    value={trainResults.wcss_history ? trainResults.wcss_history[trainResults.wcss_history.length - 1].toFixed(4) : "—"}
+                    label="Final WCSS"
                   />
-                  {/* Legend label for the line */}
-                  <Legend verticalAlign="top" />
-                  {/* The actual loss line — maroon colour, no individual dots */}
-                  <Line type="monotone" dataKey="loss" stroke="#C41E3A" strokeWidth={3} dot={false} activeDot={{ r: 8 }} />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
+                  <MetricCard value={trainResults.dimensions || "—"} label="Feature Dimensions" />
+                </div>
+                {trainResults.wcss_history && (
+                  <>
+                    <div className="section-header">
+                      <h2 className="section-title">📉 WCSS Curve (K-Means Convergence)</h2>
+                    </div>
+                    <div className="chart-card" style={{ height: "400px" }}>
+                      <ResponsiveContainer width="100%" height="100%">
+                        <LineChart
+                          data={trainResults.wcss_history.map((w, i) => ({ iteration: i + 1, wcss: w }))}
+                          margin={{ top: 20, right: 20, bottom: 20, left: 20 }}
+                        >
+                          <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                          <XAxis dataKey="iteration" name="Iteration" stroke="#888" label={{ value: 'Iterations', position: 'insideBottom', offset: -10 }} />
+                          <YAxis stroke="#888" label={{ value: 'WCSS (Within-Cluster Sum of Squares)', angle: -90, position: 'insideLeft', offset: -10 }} />
+                          <Tooltip
+                            contentStyle={{
+                              background: "#fff",
+                              border: "1px solid #eee",
+                              borderRadius: "8px",
+                              boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+                            }}
+                          />
+                          <Legend verticalAlign="top" />
+                          <Line type="monotone" dataKey="wcss" stroke="#2E86C1" strokeWidth={3} dot={false} activeDot={{ r: 8 }} />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </>
+                )}
+              </>
+            ) : model === "dtree" ? (
+              /* ── Decision Tree results — accuracy, depth, node count ── */
+              <div className="metrics-grid">
+                <MetricCard
+                  value={trainResults.training_accuracy ? (trainResults.training_accuracy * 100).toFixed(1) + "%" : "—"}
+                  label="Training Accuracy"
+                />
+                <MetricCard value={trainResults.tree_depth || "—"} label="Tree Depth" />
+                <MetricCard value={trainResults.node_count || "—"} label="Total Nodes" />
+                <MetricCard value="DTREE" label="Model Type" />
+              </div>
+            ) : (
+              /* ── Linear/Logistic results — metric cards + loss curve ── */
+              <>
+                {/* Metric cards — 4-column grid on desktop, 2-col on tablet, 1-col on mobile */}
+                <div className="metrics-grid">
+                  <MetricCard value={trainResults.epochs} label="Epochs Trained" />
+                  <MetricCard
+                    value={trainResults.loss_history[trainResults.loss_history.length - 1].toFixed(4)}
+                    label="Final Training Loss"
+                  />
+                  <MetricCard value={model.toUpperCase()} label="Model Architecture" />
+                  <MetricCard value={targetCol} label="Optimized Target" />
+                </div>
+
+                {/* Loss Curve Chart — shows how the loss decreased over epochs */}
+                <div className="section-header">
+                  <h2 className="section-title">📉 Loss Curve (Gradient Descent)</h2>
+                </div>
+                <div className="chart-card" style={{ height: "400px" }}>
+                  {/* ResponsiveContainer makes the chart fill its parent's width */}
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={formatLossData()} margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+                      {/* Dashed background grid */}
+                      <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                      {/* X-axis: epoch number */}
+                      <XAxis dataKey="epoch" name="Epoch" stroke="#888" label={{ value: 'Epochs', position: 'insideBottom', offset: -10 }} />
+                      {/* Y-axis: loss value */}
+                      <YAxis stroke="#888" label={{ value: 'Loss (MSE / Log-Loss)', angle: -90, position: 'insideLeft', offset: -10 }} />
+                      {/* Tooltip appears on hover with styled card */}
+                      <Tooltip
+                        contentStyle={{
+                          background: "#fff",
+                          border: "1px solid #eee",
+                          borderRadius: "8px",
+                          boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+                        }}
+                      />
+                      {/* Legend label for the line */}
+                      <Legend verticalAlign="top" />
+                      {/* The actual loss line — maroon colour, no individual dots */}
+                      <Line type="monotone" dataKey="loss" stroke="#C41E3A" strokeWidth={3} dot={false} activeDot={{ r: 8 }} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              </>
+            )}
           </>
         )}
 
@@ -587,9 +791,11 @@ function App() {
          *  PREDICTION RESULTS SECTION
          *  Rendered only when: mode === "predict" AND predictResults exists
          *
-         *  Contains a table of all findings with:
-         *    - Finding name, severity badge, evidence text
-         *    - Actual value and the model's predicted value
+         *  Contains:
+         *    1. Dynamic accuracy metrics (Classification Accuracy or MAE)
+         *    2. A table of all findings with:
+         *       - Finding name, severity badge, evidence text
+         *       - Actual value and the model's predicted value
          * ───────────────────────────────────────────────────────────── */}
         {mode === "predict" && predictResults && !loading && (
           <>
@@ -606,6 +812,75 @@ function App() {
                 </div>
               </div>
 
+              {/* ── Dynamic Prediction Accuracy Metrics ──
+                  Computes and displays accuracy statistics by comparing the
+                  model's predictions against the actual values from the CSV.
+                  Three variants are shown depending on the model and target column:
+                    - K-Means  → Cluster count summary (unsupervised, no accuracy)
+                    - "label"  → Classification Accuracy (% of correct predictions)
+                    - "cvss"   → Mean Absolute Error (average prediction offset) */}
+              {predictResults.results.length > 0 && (() => {
+                /* Check if the CSV contained real label values.
+                   If every label is 0, the CSV likely had no label column
+                   (the parser defaults missing labels to 0). */
+                const hasRealLabels = !predictResults.results.every(f => Number(f.label) === 0);
+
+                /* Same check for CVSS — if every CVSS value is 0, the column
+                   was probably absent from the uploaded CSV file. */
+                const hasRealCvss = !predictResults.results.every(f => Number(f.cvss) === 0);
+
+                if (model === "kmeans") {
+                  /* ── Unsupervised Clustering Summary ──
+                     Find the max cluster ID to report the number of clusters generated */
+                  const maxCluster = Math.max(...predictResults.results.map(r => Math.round(Number(r[`predicted_${targetCol}`] || 0))));
+                  return (
+                    <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", padding: "15px", borderRadius: "8px", margin: "0 20px 20px 20px", color: "#334155" }}>
+                      <h3 style={{ margin: 0, fontSize: "1.1rem" }}>📊 Unsupervised Clustering</h3>
+                      <p style={{ margin: "5px 0 0 0", fontSize: "0.9rem" }}>Data partitioned into {maxCluster + 1} distinct clusters.</p>
+                    </div>
+                  );
+                }
+
+                if (targetCol === "label" && hasRealLabels) {
+                  /* ── Classification Accuracy ──
+                     Round each predicted_label to the nearest integer (0 or 1),
+                     compare against the actual label, and count how many match.
+                     Accuracy = (correct / total) × 100 */
+                  let correct = 0;
+                  predictResults.results.forEach(f => {
+                    let pred = Math.round(Number(f.predicted_label));
+                    if (pred === Number(f.label)) correct++;
+                  });
+                  const acc = ((correct / predictResults.results.length) * 100).toFixed(2);
+
+                  return (
+                    <div style={{ background: "#f0fdf4", border: "1px solid #bbf7d0", padding: "15px", borderRadius: "8px", margin: "0 20px 20px 20px", color: "#166534" }}>
+                      <h3 style={{ margin: 0, fontSize: "1.1rem" }}>🎯 Classification Accuracy: <strong>{acc}%</strong></h3>
+                      <p style={{ margin: "5px 0 0 0", fontSize: "0.9rem" }}>Correctly predicted {correct} out of {predictResults.results.length} samples.</p>
+                    </div>
+                  );
+                }
+
+                if (targetCol === "cvss" && hasRealCvss) {
+                  /* ── Mean Absolute Error (MAE) ──
+                     For each row, compute |actual_cvss - predicted_cvss|,
+                     sum all errors, and divide by the number of samples.
+                     Lower MAE = better prediction accuracy. */
+                  let totalError = 0;
+                  predictResults.results.forEach(f => {
+                    totalError += Math.abs(Number(f.cvss) - Number(f.predicted_cvss));
+                  });
+                  const mae = (totalError / predictResults.results.length).toFixed(3);
+
+                  return (
+                    <div style={{ background: "#eff6ff", border: "1px solid #bfdbfe", padding: "15px", borderRadius: "8px", margin: "0 20px 20px 20px", color: "#1e40af" }}>
+                      <h3 style={{ margin: 0, fontSize: "1.1rem" }}>📉 Average CVSS Error (MAE): <strong>{mae} points</strong></h3>
+                      <p style={{ margin: "5px 0 0 0", fontSize: "0.9rem" }}>On average, the model's CVSS predictions were off by {mae} points.</p>
+                    </div>
+                  );
+                }
+              })()}
+
               {/* Scrollable table container for horizontal overflow on small screens */}
               <div className="findings-table-container">
                 <table className="findings-table">
@@ -614,9 +889,11 @@ function App() {
                       <th>Finding</th>
                       <th>Severity</th>
                       <th>Evidence</th>
-                      {/* Column header changes based on the target column */}
+                      {/* Column header changes based on the model and target column */}
                       <th>{targetCol === "cvss" ? "Actual CVSS" : "Actual Label"}</th>
-                      <th style={{ color: "#C41E3A" }}>Predicted {targetCol}</th>
+                      <th style={{ color: "#C41E3A" }}>
+                        {model === "kmeans" ? "Cluster ID" : `Predicted ${targetCol}`}
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
@@ -629,11 +906,13 @@ function App() {
                         {/* Show actual value for comparison */}
                         <td>{targetCol === "cvss"
                           ? (predictResults.results.every(r => Number(r.cvss) === 0) ? "-" : f.cvss)
-                          : (predictResults.results.every(r => Number(r.label) === 0) ? "-" : f.label)
-                        }</td>
-                        {/* Show the model's predicted value, rounded to 3 d.p. */}
+                          : (predictResults.results.every(r => Number(r.label) === 0) ? "-" : f.label)}
+                        </td>
+                        {/* Show the model's predicted value */}
                         <td style={{ fontWeight: "bold" }}>
-                          {Number(f[`predicted_${targetCol}`]).toFixed(3)}
+                          {model === "kmeans"
+                            ? Math.round(Number(f[`predicted_${targetCol}`]))
+                            : Number(f[`predicted_${targetCol}`]).toFixed(3)}
                         </td>
                       </tr>
                     ))}
