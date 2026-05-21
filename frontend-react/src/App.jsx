@@ -142,6 +142,8 @@ function App() {
       setFileName(selected.name);
       setError(""); // Clear old errors on new file selection
     }
+    // Clear the input value so the same file can be selected again without needing a refresh
+    e.target.value = null;
   }
 
   /**
