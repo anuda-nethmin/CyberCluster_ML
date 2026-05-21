@@ -43,7 +43,7 @@ app.use(cors());
 // File Upload Configuration
 // Create an "uploads" directory (if it doesn't exist) to temporarily
 // store CSV files uploaded by the user before passing them to ml_engine
-const uploadDir = path.join(__dirname, "Uploads");
+const uploadDir = path.join(__dirname, "uploads");
 if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir);  // Create the folder on first run
 }
@@ -204,7 +204,7 @@ app.post("/api/predict", upload.single("csv"), (req, res) => {
     }
 
     // Spawn with a 30-second timeout and 50MB buffer (inference is faster than training)
-    execFile(ML_ENGINE, args, { timeout: 30000, maxBuffer: 1024 * 1024 * 50 }, (error, stdout, stderr) => {
+    execFile(ML_ENGINE, args, { timeout: 0, maxBuffer: 1024 * 1024 * 50 }, (error, stdout, stderr) => {
         // Clean up the temporary CSV file
         try { fs.unlinkSync(csvPath); } catch (e) { }
 
