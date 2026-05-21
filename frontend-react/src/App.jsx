@@ -627,7 +627,10 @@ function App() {
                         <td><SeverityBadge severity={f.severity} /></td>
                         <td className="evidence-cell">{f.evidence}</td>
                         {/* Show actual value for comparison */}
-                        <td>{targetCol === "cvss" ? f.cvss : f.label}</td>
+                        <td>{targetCol === "cvss"
+                          ? (predictResults.results.every(r => Number(r.cvss) === 0) ? "-" : f.cvss)
+                          : (predictResults.results.every(r => Number(r.label) === 0) ? "-" : f.label)
+                        }</td>
                         {/* Show the model's predicted value, rounded to 3 d.p. */}
                         <td style={{ fontWeight: "bold" }}>
                           {Number(f[`predicted_${targetCol}`]).toFixed(3)}
