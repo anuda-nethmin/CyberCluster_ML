@@ -914,7 +914,7 @@ function App() {
                         <td style={{ fontWeight: "bold" }}>
                           {model === "kmeans"
                             ? Math.round(Number(f[`predicted_${targetCol}`]))
-                            : Number(f[`predicted_${targetCol}`]).toFixed(3)}
+                            : Number(f[`predicted_${targetCol}`])}
                         </td>
                       </tr>
                     ))}

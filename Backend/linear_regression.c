@@ -7,6 +7,7 @@ Used for predicting continuous values like CVSS scores (7.5,3.1,9) based on nume
 #include "linear_regression.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 
 /*
  Function to train linear regression model using gradient descent optimization.
@@ -41,13 +42,14 @@ int train_linear_regression(double *features, double *targets, int n, int dim,
     if (fp_in) fclose(fp_in);
     for(int i = 0; i <= dim; i++) weights[i] = 0.0;
     }
+
     // The Gradient descent loop
     for (int e =0; e < epochs; e++)
     {
         // Array to accumulate the slope of the error curvefor this weight (nudgeing directions)
         double *grads = (double*)calloc(dim + 1, sizeof(double));
         double epoch_loss = 0.0;
-
+        
         // Process each row in the dataset
         for (int i=0; i < n; i++)
         {
@@ -140,7 +142,7 @@ int predict_linear_regression(double *features, int n, int dim, const char *weig
         for (int j = 0; j < dim; j++) {
             y_pred += weights[j + 1] * features[i * dim + j];
         }
-        predictions[i] = y_pred;
+        predictions[i] = ceil(y_pred * 10.0) / 10.0; // Round up to nearest tenth
     }
 
     free(weights);
