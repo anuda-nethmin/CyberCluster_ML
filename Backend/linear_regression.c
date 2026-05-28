@@ -29,7 +29,7 @@ int train_linear_regression(double *features, double *targets, int n, int dim,
     double *weights = (double *)calloc(dim + 1, sizeof(double));
     if (!weights) return -1;
 
-    // 2. Try to open the existing weights file
+    /*// 2. Try to open the existing weights file
     FILE *fp_in = fopen(weight_file, "rb");
     int saved_dim = 0;
 
@@ -41,7 +41,7 @@ int train_linear_regression(double *features, double *targets, int n, int dim,
     // 4. Otherwise (first run), start from 0.0
     if (fp_in) fclose(fp_in);
     for(int i = 0; i <= dim; i++) weights[i] = 0.0;
-    }
+    }*/
 
     // The Gradient descent loop
     for (int e =0; e < epochs; e++)
